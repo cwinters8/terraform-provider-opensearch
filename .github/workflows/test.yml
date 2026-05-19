@@ -1,5 +1,9 @@
 on: [push, pull_request]
 name: Test
+
+permissions:
+  contents: write
+
 jobs:
   lint:
     # Separate golangci-lint into its own job because it can override go
@@ -106,7 +110,7 @@ jobs:
         # check goreleaser config for deprecations
         curl -sfL https://git.io/goreleaser | sh -s -- check
   release:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: [test]
     runs-on: ubuntu-latest
     name: Release
@@ -117,24 +121,23 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: '1.24'
-    - name: Load secret
-      uses: 1password/load-secrets-action@v2
-      with:
-        # Export loaded secrets as environment variables
-        export-env: true
-      env:
-        OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-        GPG_PRIVATE_KEY: op://opensearch-infra-secrets/release-gpg-key/signing-subkey-private
-        GPG_PASSPHRASE: op://opensearch-infra-secrets/release-gpg-key/passphrase
-        GPG_FINGERPRINT: op://opensearch-infra-secrets/release-gpg-key/signing-subkey-fingerprint
+    # - name: Load secret
+    #   uses: 1password/load-secrets-action@v2
+    #   with:
+    #     # Export loaded secrets as environment variables
+    #     export-env: true
+    #   env:
+    #     OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+    #     GPG_PRIVATE_KEY: op://opensearch-infra-secrets/release-gpg-key/signing-subkey-private
+    #     GPG_PASSPHRASE: op://opensearch-infra-secrets/release-gpg-key/passphrase
+    #     GPG_FINGERPRINT: op://opensearch-infra-secrets/release-gpg-key/signing-subkey-fingerprint
 
     - name: Import GPG key
       id: import_gpg
       uses: crazy-max/ghaction-import-gpg@v6
       with:
-        gpg_private_key: ${{ env.GPG_PRIVATE_KEY }}
-        passphrase: ${{ env.GPG_PASSPHRASE }}
-        fingerprint: ${{ env.GPG_FINGERPRINT }}
+        gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+        passphrase: ${{ secrets.GPG_PASSPHRASE }}
         
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v6
