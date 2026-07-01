@@ -113,7 +113,7 @@ func TestAccOpensearchDashboardObject_Rejected(t *testing.T) {
 	if diags.HasError() {
 		t.Skipf("err: %#v", diags)
 	}
-	var allowed bool = false
+	var allowed = false
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
